@@ -1,0 +1,17 @@
+{
+  "allow_auto_reply_domains": [],
+  "block_reply_domains": ["no-reply", "noreply", "donotreply", "mailer-daemon"],
+  "never_reply_keywords": [
+    "código", "codigo", "otp", "senha", "login", "confirmação", "confirmacao",
+    "confirmation", "verification", "verify", "2fa", "two-factor", "one-time",
+    "password reset", "security code", "authentication code", "code"
+  ],
+  "newsletter_keywords": ["unsubscribe", "newsletter", "opt out", "opt-out", "preferences", "inscreva-se", "descadastrar", "mailing list"],
+  "safe_newsletter_keywords": ["unsubscribe", "newsletter", "opt out", "opt-out", "preferences", "inscreva-se", "descadastrar", "mailing list"],
+  "require_manual_categories": ["financeiro", "juridico", "pessoal", "alta_prioridade"],
+  "max_send_per_run": 3,
+  "since_hours_default": 72,
+  "delete_strategy": "two_step",
+  "pending_delete_hours": 6,
+  "default_signature": "— Diego"
+}

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InboxPilot - Email Assistant</title>
+    <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="top-bar">
+            <h1>InboxPilot</h1>
+            
+            <select id="rangeSelect">
+                <option value="today" selected>Hoje</option>
+                <option value="current_week">Esta Semana (Seg-Dom)</option>
+                <option value="last_n_days">Últimos N Dias</option>
+                <option value="custom">Personalizado</option>
+            </select>
+            
+            <div id="nDaysGroup" class="range-group" style="display:none;">
+                <input type="number" id="nDaysInput" value="7" min="1" max="60" style="width:60px;">
+                <span>dias</span>
+            </div>
+            
+            <div id="customDateGroup" class="range-group" style="display:none;">
+                <input type="date" id="startDateInput" title="Data início">
+                <span>&rarr;</span>
+                <input type="date" id="endDateInput" title="Data fim">
+            </div>
+            
+            <label title="Filtrar apenas e-mails não lidos">
+                <input type="checkbox" id="unreadOnlyCheck" onchange="currentLoadLimit=50; totalAvailableEmails=0; loadEmails();"> Só não lidos
+            </label>
+            
+            <span class="divider">|</span>
+            
+            <label><input type="checkbox" class="provider-check" value="apple" checked> Apple</label>
+            <label><input type="checkbox" class="provider-check" value="gmail" checked> Gmail</label>
+            <label><input type="checkbox" class="folder-check" value="inbox" checked> Inbox</label>
+            <label><input type="checkbox" class="folder-check" value="spam"> Spam</label>
+            
+            <button id="refreshBtn">Atualizar</button>
+            <button id="syncBtn" class="btn-sync" title="Sincronizar filas e despachar ações">Sincronizar</button>
+            <button id="triageBtn" class="btn-triage">Triage IA</button>
+            <button id="handsFreeBtn" class="btn-handsfree" title="Modo Hands Free (Voz)">Hands Free</button>
+            <a href="/tutorial" target="_blank" class="btn-tutorial" title="Tutorial de uso">?</a>
+        </div>
+        
+        <div id="providerBanner"></div>
+        
+        <div class="range-info-bar">
+            <span id="rangeDisplay">Carregando...</span>
+        </div>
+        
+        <div class="main-content">
+            <div class="email-list" id="emailList">
+                <div class="loading"><div class="spinner"></div>Carregando...</div>
+            </div>
+            
+            <div class="email-detail empty" id="emailDetail">
+                Selecione um e-mail
+            </div>
+            
+            <div class="side-panel">
+                <div class="connections-block">
+                    <h4>Conexões</h4>
+                    <div id="connectionsPanel">Carregando...</div>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab active" data-tab="assistant">Assistente</button>
+                    <button class="tab" data-tab="queue">Fila</button>
+                    <button class="tab" data-tab="import">Importar</button>
+                    <button class="tab" data-tab="export">Exportar</button>
+                </div>
+                
+                <div class="tab-content" id="assistantTab">
+                    <div class="chat-history" id="chatHistory"></div>
+                    <div class="chat-input-area">
+                        <textarea id="chatInput" placeholder="Pergunte algo sobre seus e-mails..." rows="2"></textarea>
+                        <button class="btn-primary" id="chatSendBtn">Enviar</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="queueTab">
+                    <div id="queueList">
+                        <div class="empty-state">Fila vazia</div>
+                    </div>
+                    <div class="queue-actions">
+                        <button class="btn-secondary" id="queueDryRunBtn">Validar (dry run)</button>
+                        <button class="btn-success" id="queueExecuteBtn">Executar Tudo</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="importTab">
+                    <div class="export-section">
+                        <h3 style="margin-bottom:12px;">Importar JSON do ChatGPT</h3>
+                        <textarea id="importJsonInput" placeholder='Cole o JSON aqui...' style="width:100%; height:150px; font-family:monospace; font-size:11px; resize:vertical;"></textarea>
+                        <button id="importDryRunBtn" style="margin-top:8px;">Simular (dry run)</button>
+                        <button id="importExecuteBtn" class="btn-success" style="margin-top:8px;">Executar</button>
+                        <div id="importResult" style="margin-top:12px; font-size:12px;"></div>
+                    </div>
+                </div>
+                
+                <div class="tab-content hidden" id="exportTab">
+                    <div class="export-section">
+                        <h3 style="margin-bottom:16px;">Exportar Dados</h3>
+                        <button id="exportChatGPTBtn">Copiar RESUMO para ChatGPT</button>
+                        <button id="exportDispatchBtn">Copiar DESPACHO FINAL JSON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <span id="networkStatus" class="net-online" title="Status da conexão">Online</span>
+            <span id="snapshotInfo" class="snapshot-info"></span>
+            <span id="queueBadge" class="queue-badge hidden"></span>
+            <span id="statusText">Pronto</span>
+            <span>InboxPilot v2.0</span>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="apiKeyModal">
+        <div class="modal">
+            <h3>API Key Necessária</h3>
+            <input type="password" id="apiKeyInput" placeholder="Digite sua API Key">
+            <div class="modal-actions">
+                <button class="btn-secondary" id="cancelApiKeyBtn">Cancelar</button>
+                <button class="btn-primary" id="saveApiKeyBtn">Salvar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="triageModal">
+        <div class="modal modal-large">
+            <h3>Triage com IA</h3>
+            <div id="triageResults">
+                <div class="loading"><div class="spinner"></div>Analisando e-mails...</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" id="triageAddAllBtn">Adicionar Todos à Fila</button>
+                <button class="btn-secondary" id="closeTriageBtn">Fechar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay hidden" id="replyModal">
+        <div class="modal modal-large">
+            <h3>Resposta Sugerida pela IA</h3>
+            <div id="replyToneSelector" style="margin-bottom:12px;">
+                <label>Tom:
+                    <select id="replyTone">
+                        <option value="neutral">Neutro</option>
+                        <option value="formal">Formal</option>
+                        <option value="short">Curto</option>
+                        <option value="friendly">Amigável</option>
+                    </select>
+                </label>
+                <button class="btn-secondary btn-sm" id="regenerateReplyBtn">Regenerar</button>
+            </div>
+            <div id="replyNotes" style="font-size:0.85rem; color:#666; margin-bottom:8px;"></div>
+            <textarea id="replyDraftText" rows="10" style="width:100%; font-family:inherit; font-size:0.9rem; padding:12px; border:1px solid #ddd; border-radius:6px; resize:vertical;"></textarea>
+            <div class="modal-actions">
+                <button class="btn-success" id="addReplyToQueueBtn">Adicionar à Fila (Enviar)</button>
+                <button class="btn-secondary" id="closeReplyBtn">Descartar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="hf-overlay hidden" id="hfOverlay">
+        <div class="hf-panel">
+            <div class="hf-header">
+                <h2>Hands Free</h2>
+                <div class="hf-mode-toggle">
+                    <button class="hf-mode-btn" id="hfModeAuto" data-mode="auto">Automático</button>
+                    <button class="hf-mode-btn active" id="hfModeManual" data-mode="manual">Manual</button>
+                    <button class="hf-mode-btn" data-mode="always_on" title="Escuta contínua com hotword">Always On</button>
+                </div>
+                <button class="hf-close" id="hfCloseBtn">&times;</button>
+            </div>
+            
+            <div class="hf-status" id="hfStatus">Pronto para ouvir</div>
+            
+            <div class="hf-mic-area">
+                <button class="hf-mic-btn" id="hfMicBtn" title="Toque para falar">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                </button>
+                <div class="hf-pulse" id="hfPulse"></div>
+            </div>
+            
+            <div class="hf-action-buttons">
+                <button id="hfStopBtn" class="hf-action-btn hf-stop-btn" style="display:none;">Parar</button>
+                <button id="hfRepeatBtn" class="hf-action-btn hf-repeat-btn" style="display:none;">Repetir</button>
+            </div>
+            
+            <div class="hf-transcript" id="hfTranscript">
+                <div class="hf-welcome">Toque no microfone e diga um comando.<br>Ex: "ler e-mail 1", "apagar e-mail 2", "apagar todos", "sugerir resposta e-mail 1", "resumo", "ajuda"</div>
+            </div>
+            
+            <div class="hf-edit-area">
+                <input type="text" id="hfEditInput" placeholder="Ou digite seu comando aqui..." autocomplete="off">
+                <button id="hfEditSendBtn" title="Enviar texto">Enviar</button>
+            </div>
+            
+            <div class="hf-controls">
+                <select id="hfSourceSelect" title="Fonte de e-mails">
+                    <option value="dashboard">Filtros do Dashboard</option>
+                    <option value="apple">Somente Apple</option>
+                    <option value="gmail">Somente Gmail</option>
+                </select>
+                <select id="hfVoiceSelect" title="Voz de saída">
+                    <option value="">Voz padrão</option>
+                </select>
+                <div class="hf-speed-control">
+                    <label>Velocidade: <span id="hfSpeedValue">1.00x</span></label>
+                    <input type="range" id="hfSpeedSlider" min="0.85" max="1.15" step="0.05" value="1.0">
+                </div>
+                <button id="hfTestVoiceBtn" class="hf-action-btn" title="Testar voz">Testar</button>
+                <label class="hf-option hf-debug-label" title="Manter ritmo uniforme entre PT e EN">
+                    <input type="checkbox" id="hfNormalizeToggle" checked> Normalizar
+                </label>
+                <label class="hf-option hf-debug-label">
+                    <input type="checkbox" id="hfDebugToggle"> Debug
+                </label>
+            </div>
+            
+            <div id="hfDebugPanel" class="hf-debug-panel hidden">
+                <pre id="hfDebugContent"></pre>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/offlineStore.js"></script>
+    <script src="/static/app.js"></script>
+    <script src="/static/handsfree.js"></script>
+</body>
+</html>

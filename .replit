@@ -1,0 +1,62 @@
+entrypoint = "main.py"
+modules = ["python-3.11", "postgresql-16"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["freetype", "glibcLocales", "libxcrypt", "zip"]
+
+[unitTest]
+language = "python3"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix"]
+
+[deployment]
+run = ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
+deploymentTarget = "autoscale"
+
+[agent]
+expertMode = true
+
+[userenv]
+
+[userenv.shared]
+BASE_URL = "https://inbox-pilot--dmarcondesguerr.replit.app"
+LLM_PROVIDER = "openai"
+LLM_MODEL = "gpt-4.1-mini"
+LLM_MAX_INPUT_CHARS = "12000"
+LLM_MAX_OUTPUT_TOKENS = "350"
+LLM_TEMPERATURE = "0.2"
+LLM_CACHE_TTL_SECONDS = "604800"
+LLM_SUMMARY_MAX_TOKENS = "180"
+LLM_TIMEOUT_SECONDS = "20"
+LLM_TRIAGE_MODEL = "gpt-4.1-mini"
+LLM_REPLY_MODEL = "gpt-4.1"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "InboxPilot API"
+
+[[workflows.workflow]]
+name = "InboxPilot API"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "uvicorn main:app --host 0.0.0.0 --port 5000"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

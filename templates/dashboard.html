@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InboxPilot v1.1 - Dashboard</title>
+    <link rel="stylesheet" href="/static/app.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .header { background: #1a73e8; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.4rem; font-weight: 500; }
+        .header .version { opacity: 0.8; font-size: 0.85rem; }
+        .main-container { display: grid; grid-template-columns: 320px 1fr 300px; height: calc(100vh - 52px); }
+        .sidebar { background: white; border-right: 1px solid #e0e0e0; overflow-y: auto; }
+        .center-panel { background: #fafafa; padding: 20px; overflow-y: auto; }
+        .right-panel { background: white; border-left: 1px solid #e0e0e0; padding: 15px; overflow-y: auto; }
+        .filters { padding: 15px; border-bottom: 1px solid #e0e0e0; background: #f8f9fa; }
+        .filter-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .filter-row select, .filter-row button { padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; }
+        .filter-row button { background: #1a73e8; color: white; border: none; cursor: pointer; }
+        .filter-row button:hover { background: #1557b0; }
+        .email-list { list-style: none; }
+        .email-item { padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.15s; }
+        .email-item:hover { background: #f0f7ff; }
+        .email-item.active { background: #e3f2fd; border-left: 3px solid #1a73e8; }
+        .email-item .sender { font-weight: 500; font-size: 0.9rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .email-item .subject { color: #555; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .email-item .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+        .email-item .date { color: #888; font-size: 0.75rem; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; }
+        .badge-human { background: #e8f5e9; color: #2e7d32; }
+        .badge-newsletter { background: #fff3e0; color: #ef6c00; }
+        .badge-otp { background: #fce4ec; color: #c2185b; }
+        .badge-noreply { background: #e3f2fd; color: #1565c0; }
+        .badge-unknown { background: #f5f5f5; color: #616161; }
+        .email-detail { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .email-detail-header { padding: 20px; border-bottom: 1px solid #eee; }
+        .email-detail-header h2 { font-size: 1.2rem; font-weight: 500; margin-bottom: 10px; }
+        .email-detail-header .meta-row { display: flex; gap: 20px; color: #666; font-size: 0.85rem; margin-bottom: 5px; }
+        .email-detail-body { padding: 20px; min-height: 200px; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; }
+        .email-actions { padding: 15px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; flex-wrap: wrap; }
+        .email-actions button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: all 0.15s; }
+        .btn-primary { background: #1a73e8; color: white; }
+        .btn-primary:hover { background: #1557b0; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-outline { background: white; border: 1px solid #ddd; color: #333; }
+        .btn-outline:hover { background: #f5f5f5; }
+        .queue-section h3 { font-size: 1rem; font-weight: 500; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .queue-list { list-style: none; margin-bottom: 15px; max-height: 300px; overflow-y: auto; }
+        .queue-item { padding: 8px 10px; background: #f8f9fa; border-radius: 4px; margin-bottom: 6px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+        .queue-item .action-badge { padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; }
+        .queue-item .action-badge.send { background: #d4edda; color: #155724; }
+        .queue-item .action-badge.delete { background: #f8d7da; color: #721c24; }
+        .queue-item .action-badge.mark_read { background: #cce5ff; color: #004085; }
+        .queue-item .action-badge.skip { background: #e2e3e5; color: #383d41; }
+        .queue-item .remove-btn { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1rem; }
+        .queue-actions { display: flex; flex-direction: column; gap: 8px; }
+        .import-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
+        .import-section textarea { width: 100%; height: 80px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.8rem; resize: vertical; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #888; }
+        .empty-state h3 { font-size: 1.1rem; margin-bottom: 10px; }
+        .loading { text-align: center; padding: 20px; color: #888; }
+        .status-bar { padding: 8px 15px; background: #e8f5e9; color: #2e7d32; font-size: 0.85rem; display: none; }
+        .status-bar.error { background: #ffebee; color: #c62828; }
+        .status-bar.show { display: block; }
+        @media (max-width: 1024px) {
+            .main-container { grid-template-columns: 1fr; }
+            .sidebar, .right-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div>
+            <h1>InboxPilot</h1>
+            <span class="version">v1.1 Dashboard</span>
+        </div>
+        <div id="session-info" style="font-size: 0.85rem;"></div>
+    </header>
+    
+    <div id="status-bar" class="status-bar"></div>
+    
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="filters">
+                <div class="filter-row" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+                    <label style="font-size: 0.85rem; font-weight: bold;">Periodo:</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <label style="font-size: 0.8rem;"><input type="radio" name="date_mode" value="today" checked onchange="toggleDateInputs()"> Hoje</label>
+                        <label style="font-size: 0.8rem;"><input type="radio" name="date_mode" value="current_week" onchange="toggleDateInputs()"> Semana Atual</label>
+                        <label style="font-size: 0.8rem;"><input type="radio" name="date_mode" value="rolling" onchange="toggleDateInputs()"> Ultimos N dias</label>
+                        <label style="font-size: 0.8rem;"><input type="radio" name="date_mode" value="custom_range" onchange="toggleDateInputs()"> Intervalo</label>
+                    </div>
+                </div>
+                <div class="filter-row" id="rolling-days-row" style="display: none;">
+                    <label style="font-size: 0.85rem;">Dias:</label>
+                    <input type="number" id="filter-rolling-days" value="7" min="1" max="90" style="width: 60px; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div class="filter-row" id="custom-dates" style="display: none;">
+                    <input type="date" id="filter-from-date" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;">
+                    <span style="padding: 6px;">ate</span>
+                    <input type="date" id="filter-to-date" style="padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;">
+                </div>
+                <div class="filter-row">
+                    <select id="filter-provider">
+                        <option value="apple,gmail,microsoft">Todos</option>
+                        <option value="apple">Apple (iCloud)</option>
+                        <option value="microsoft">Microsoft (SSB)</option>
+                        <option value="gmail">Gmail</option>
+                    </select>
+                    <select id="filter-folder">
+                        <option value="inbox">Inbox</option>
+                        <option value="spam">Spam</option>
+                        <option value="inbox,spam">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <button id="btn-refresh" onclick="startSession()" style="flex: 2;">Atualizar</button>
+                </div>
+                <div class="filter-row">
+                    <button onclick="exportSession()" style="background: #6c757d; flex: 1;">Exportar TXT</button>
+                    <button onclick="exportPdf()" style="background: #28a745; flex: 1;">Exportar PDF</button>
+                </div>
+            </div>
+            <ul id="email-list" class="email-list">
+                <li class="empty-state">
+                    <h3>Nenhum email</h3>
+                    <p>Clique em Atualizar para buscar emails</p>
+                </li>
+            </ul>
+        </aside>
+        
+        <main class="center-panel">
+            <div id="email-detail" class="email-detail" style="display: none;">
+                <div class="email-detail-header">
+                    <h2 id="detail-subject"></h2>
+                    <div class="meta-row">
+                        <span><strong>De:</strong> <span id="detail-from"></span></span>
+                        <span><strong>Data:</strong> <span id="detail-date"></span></span>
+                    </div>
+                    <div class="meta-row">
+                        <span><strong>Provider:</strong> <span id="detail-provider"></span></span>
+                        <span><strong>Pasta:</strong> <span id="detail-folder"></span></span>
+                        <span id="detail-classification"></span>
+                    </div>
+                </div>
+                <div id="detail-body" class="email-detail-body"></div>
+                <div class="email-actions">
+                    <button class="btn-danger" onclick="addToQueue('delete')">Apagar</button>
+                    <button class="btn-secondary" onclick="addToQueue('mark_read')">Marcar como lido</button>
+                    <button class="btn-primary" onclick="suggestReply()">Sugerir resposta</button>
+                    <button class="btn-success" onclick="addToQueue('send')">Enviar</button>
+                    <button class="btn-outline" onclick="addToQueue('skip')">Ignorar</button>
+                </div>
+            </div>
+            
+            <div id="empty-detail" class="empty-state">
+                <h3>Selecione um email</h3>
+                <p>Clique em um email na lista para ver os detalhes</p>
+            </div>
+            
+            <div id="draft-section" style="display: none; margin-top: 20px; background: white; border-radius: 8px; padding: 20px;">
+                <h3 style="margin-bottom: 10px;">Resposta sugerida:</h3>
+                <textarea id="draft-text" style="width: 100%; height: 150px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                <div style="margin-top: 10px;">
+                    <button class="btn-success" onclick="sendDraft()">Enviar resposta</button>
+                </div>
+            </div>
+        </main>
+        
+        <aside class="right-panel">
+            <div class="import-section">
+                <h3 style="font-size: 1rem; margin-bottom: 12px;">Despacho GPT</h3>
+                <p style="font-size: 0.75rem; color: #666; margin-bottom: 10px;">Cole aqui o JSON gerado pelo ChatGPT:</p>
+                <textarea id="dispatch-json" placeholder='{"session_id":"sess_...","actions":[{"key":"apple:123","decision":"delete"}]}' style="height: 150px;"></textarea>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                    <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                        <input type="checkbox" id="dispatch-force"> Forcar reprocessamento
+                    </label>
+                </div>
+                <button class="btn-success" onclick="executeDispatch()" style="width: 100%; margin-top: 12px; padding: 12px; font-size: 1rem;">Executar Despacho</button>
+                <button class="btn-outline" onclick="validateDispatch()" style="width: 100%; margin-top: 8px;">Simular primeiro</button>
+                <pre id="dispatch-result" style="display: none; margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 0.75rem; max-height: 150px; overflow: auto; white-space: pre-wrap;"></pre>
+            </div>
+            
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;">
+                <button class="btn-outline" onclick="showDispatchExample()" style="width: 100%;">Ver Exemplo JSON</button>
+            </div>
+            
+            <div class="import-section" style="margin-top: 20px;">
+                <h3 style="font-size: 1rem; margin-bottom: 12px;">Compor Email</h3>
+                <select id="compose-provider" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="apple">Apple Mail</option>
+                    <option value="gmail">Gmail</option>
+                </select>
+                <input type="email" id="compose-to" placeholder="Para: email@exemplo.com" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <input type="text" id="compose-subject" placeholder="Assunto" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <textarea id="compose-body" placeholder="Mensagem..." style="width: 100%; height: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; box-sizing: border-box;"></textarea>
+                <button class="btn-success" onclick="sendComposedEmail()" style="width: 100%; margin-top: 10px; padding: 10px;">Enviar Email</button>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        let currentSession = null;
+        let currentEmail = null;
+        let queue = [];
+        let emails = [];
+
+        function showStatus(msg, isError = false) {
+            const bar = document.getElementById('status-bar');
+            bar.textContent = msg;
+            bar.className = 'status-bar show' + (isError ? ' error' : '');
+            setTimeout(() => bar.className = 'status-bar', 3000);
+        }
+
+        function toggleDateInputs() {
+            const dateMode = document.querySelector('input[name="date_mode"]:checked').value;
+            const rollingRow = document.getElementById('rolling-days-row');
+            const customDates = document.getElementById('custom-dates');
+            
+            rollingRow.style.display = dateMode === 'rolling' ? 'flex' : 'none';
+            customDates.style.display = dateMode === 'custom_range' ? 'flex' : 'none';
+            
+            if (dateMode === 'custom_range') {
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('filter-to-date').value = today;
+                const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                document.getElementById('filter-from-date').value = weekAgo;
+            }
+        }
+
+        async function startSession() {
+            const dateMode = document.querySelector('input[name="date_mode"]:checked').value;
+            const providers = document.getElementById('filter-provider').value;
+            const folders = document.getElementById('filter-folder').value;
+            const fromDate = document.getElementById('filter-from-date').value;
+            const toDate = document.getElementById('filter-to-date').value;
+            const rollingDays = parseInt(document.getElementById('filter-rolling-days').value) || 7;
+            
+            document.getElementById('email-list').innerHTML = '<li class="loading">Carregando...</li>';
+            
+            try {
+                const body = {
+                    providers: providers.split(','),
+                    folders: folders.split(','),
+                    date_mode: dateMode,
+                    max_per_provider: 50
+                };
+                
+                if (dateMode === 'rolling') {
+                    body.rolling_days = rollingDays;
+                }
+                
+                if (dateMode === 'custom_range' && fromDate && toDate) {
+                    body.from_date = fromDate;
+                    body.to_date = toDate;
+                }
+                
+                const res = await fetch('/session/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const data = await res.json();
+                currentSession = data.session_id;
+                document.getElementById('session-info').textContent = `Sessao: ${currentSession}`;
+                showStatus(`Sessao iniciada: ${data.counts.total || 0} emails`);
+                
+                loadEmails();
+            } catch (e) {
+                showStatus('Erro ao iniciar sessao: ' + e.message, true);
+            }
+        }
+
+        async function exportSession() {
+            if (!currentSession) {
+                showStatus('Inicie uma sessao primeiro', true);
+                return;
+            }
+            
+            try {
+                const res = await fetch(`/session/${currentSession}/export?format=text`);
+                const text = await res.text();
+                
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentSession}_gpt.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('Exportacao GPT baixada');
+            } catch (e) {
+                showStatus('Erro ao exportar: ' + e.message, true);
+            }
+        }
+
+        async function exportPdf() {
+            if (!currentSession) {
+                showStatus('Inicie uma sessao primeiro', true);
+                return;
+            }
+            
+            window.open(`/export/pdf?session_id=${currentSession}`, '_blank');
+            showStatus('PDF sendo gerado...');
+        }
+
+        async function loadEmails() {
+            if (!currentSession) {
+                const res = await fetch('/assistant/read?limit=50');
+                const data = await res.json();
+                if (data.session_id) {
+                    currentSession = data.session_id;
+                    document.getElementById('session-info').textContent = `Sessao: ${currentSession}`;
+                }
+                emails = data.emails || [];
+            } else {
+                const res = await fetch(`/session/${currentSession}/items?limit=50`);
+                const data = await res.json();
+                emails = data.items || [];
+            }
+            
+            renderEmailList();
+        }
+
+        function renderEmailList() {
+            const list = document.getElementById('email-list');
+            
+            if (emails.length === 0) {
+                list.innerHTML = '<li class="empty-state"><h3>Nenhum email</h3><p>Clique em Atualizar para buscar emails</p></li>';
+                return;
+            }
+            
+            list.innerHTML = emails.map((email, idx) => `
+                <li class="email-item" onclick="selectEmail('${email.key}')" data-key="${email.key}">
+                    <div class="sender">${escapeHtml(email.from || '')}</div>
+                    <div class="subject">${escapeHtml(email.subject || '')}</div>
+                    <div class="meta">
+                        <span class="badge badge-${(email.classification || 'unknown').toLowerCase()}">${email.classification || 'UNKNOWN'}</span>
+                        <span class="date">${formatDate(email.date)}</span>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        async function selectEmail(key) {
+            document.querySelectorAll('.email-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`[data-key="${key}"]`)?.classList.add('active');
+            
+            try {
+                const res = await fetch(`/assistant/email/${encodeURIComponent(key)}`);
+                const data = await res.json();
+                currentEmail = data;
+                
+                document.getElementById('detail-subject').textContent = data.subject || '';
+                document.getElementById('detail-from').textContent = data.from || '';
+                document.getElementById('detail-date').textContent = data.date || '';
+                document.getElementById('detail-provider').textContent = data.provider || '';
+                document.getElementById('detail-folder').textContent = data.folder || '';
+                document.getElementById('detail-classification').innerHTML = `<span class="badge badge-${(data.classification || 'unknown').toLowerCase()}">${data.classification || 'UNKNOWN'}</span>`;
+                document.getElementById('detail-body').textContent = data.body || '';
+                
+                document.getElementById('email-detail').style.display = 'block';
+                document.getElementById('empty-detail').style.display = 'none';
+                document.getElementById('draft-section').style.display = 'none';
+                
+                if (data.draft) {
+                    document.getElementById('draft-text').value = data.draft;
+                    document.getElementById('draft-section').style.display = 'block';
+                }
+            } catch (e) {
+                showStatus('Erro ao carregar email: ' + e.message, true);
+            }
+        }
+
+        function addToQueue(action) {
+            if (!currentEmail) return;
+            
+            const existing = queue.findIndex(q => q.key === currentEmail.key);
+            if (existing >= 0) {
+                queue[existing].action = action;
+            } else {
+                queue.push({ key: currentEmail.key, action: action });
+            }
+            
+            renderQueue();
+            showStatus(`Acao "${action}" adicionada a fila`);
+        }
+
+        function removeFromQueue(key) {
+            queue = queue.filter(q => q.key !== key);
+            renderQueue();
+        }
+
+        function renderQueue() {
+            document.getElementById('queue-count').textContent = queue.length;
+            const list = document.getElementById('queue-list');
+            
+            if (queue.length === 0) {
+                list.innerHTML = '<li style="color: #888; font-size: 0.8rem; padding: 10px;">Fila vazia</li>';
+                return;
+            }
+            
+            list.innerHTML = queue.map(q => {
+                const email = emails.find(e => e.key === q.key);
+                const subject = email ? (email.subject || '').substring(0, 25) + '...' : q.key;
+                return `
+                    <li class="queue-item">
+                        <div>
+                            <span class="action-badge ${q.action}">${q.action}</span>
+                            <span style="margin-left: 5px;">${escapeHtml(subject)}</span>
+                        </div>
+                        <button class="remove-btn" onclick="removeFromQueue('${q.key}')">&times;</button>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        async function executeQueue(dryRun) {
+            if (queue.length === 0) {
+                showStatus('Fila vazia', true);
+                return;
+            }
+            if (!dryRun) {
+                if (!confirm('ATENCAO: Voce esta prestes a EXECUTAR acoes reais (enviar, deletar, marcar como lido). Deseja continuar?')) {
+                    return;
+                }
+            }
+            
+            try {
+                const planRes = await fetch('/assistant/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSession,
+                        actions: queue
+                    })
+                });
+                
+                const planData = await planRes.json();
+                if (!planData.ok) {
+                    showStatus('Erro ao enfileirar acoes', true);
+                    return;
+                }
+                
+                const execRes = await fetch('/automation/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSession,
+                        dry_run: dryRun,
+                        max_actions: 200
+                    })
+                });
+                
+                const execData = await execRes.json();
+                
+                if (dryRun) {
+                    showStatus(`Simulacao: ${execData.executed} acoes seriam executadas`);
+                } else {
+                    showStatus(`Executado: ${execData.executed} sucesso, ${execData.failed} falhas`);
+                    queue = [];
+                    renderQueue();
+                    loadEmails();
+                }
+            } catch (e) {
+                showStatus('Erro ao executar: ' + e.message, true);
+            }
+        }
+
+        function exportJson() {
+            const data = {
+                session_id: currentSession,
+                actions: queue
+            };
+            
+            const json = JSON.stringify(data, null, 2);
+            navigator.clipboard.writeText(json);
+            showStatus('JSON copiado para area de transferencia');
+        }
+
+        async function importPlan() {
+            const textarea = document.getElementById('import-json');
+            try {
+                const data = JSON.parse(textarea.value);
+                
+                const res = await fetch('/assistant/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await res.json();
+                showStatus(`Importado: ${result.queued} acoes enfileiradas`);
+                
+                if (data.actions) {
+                    queue = data.actions;
+                    renderQueue();
+                }
+                
+                textarea.value = '';
+            } catch (e) {
+                showStatus('JSON invalido: ' + e.message, true);
+            }
+        }
+
+        async function getCopyPasteBlock() {
+            try {
+                const res = await fetch(`/assistant/read?session_id=${currentSession || ''}&limit=20`);
+                const data = await res.json();
+                
+                const output = document.getElementById('copy-paste-output');
+                output.textContent = data.copy_paste_block;
+                output.style.display = 'block';
+                
+                navigator.clipboard.writeText(data.copy_paste_block);
+                showStatus('Texto copiado para area de transferencia');
+            } catch (e) {
+                showStatus('Erro: ' + e.message, true);
+            }
+        }
+
+        async function suggestReply() {
+            if (!currentEmail) return;
+            
+            showStatus('Gerando sugestao de resposta...');
+            
+            try {
+                const res = await fetch(`/inbox/message/${encodeURIComponent(currentEmail.key)}/suggest-reply`, {
+                    method: 'POST'
+                });
+                
+                const data = await res.json();
+                
+                if (data.suggested_reply) {
+                    document.getElementById('draft-text').value = data.suggested_reply;
+                    document.getElementById('draft-section').style.display = 'block';
+                    showStatus('Sugestao gerada');
+                } else {
+                    showStatus('Nenhuma sugestao disponivel', true);
+                }
+            } catch (e) {
+                showStatus('Erro ao gerar sugestao: ' + e.message, true);
+            }
+        }
+
+        function sendDraft() {
+            if (!currentEmail) return;
+            
+            const body = document.getElementById('draft-text').value;
+            queue.push({ key: currentEmail.key, action: 'send', body: body });
+            renderQueue();
+            showStatus('Resposta adicionada a fila');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+            } catch {
+                return dateStr.substring(0, 16);
+            }
+        }
+
+        async function validateDispatch() {
+            await executeDispatchInternal(true);
+        }
+
+        async function executeDispatch() {
+            const textarea = document.getElementById('dispatch-json');
+            if (!textarea.value.trim()) {
+                showStatus('Cole o JSON do despacho primeiro', true);
+                return;
+            }
+            if (!confirm('ATENCAO: Voce esta prestes a EXECUTAR acoes reais (enviar, deletar, marcar como lido). Deseja continuar?')) {
+                showStatus('Execucao cancelada pelo usuario');
+                return;
+            }
+            showStatus('Executando despacho...');
+            await executeDispatchInternal(false);
+        }
+
+        async function executeDispatchInternal(dryRun) {
+            const textarea = document.getElementById('dispatch-json');
+            const resultPre = document.getElementById('dispatch-result');
+            const forceCheckbox = document.getElementById('dispatch-force');
+            
+            try {
+                let data = JSON.parse(textarea.value);
+                data.dry_run = dryRun;
+                data.force = forceCheckbox.checked;
+                
+                const res = await fetch('/dispatch/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await res.json();
+                
+                resultPre.textContent = JSON.stringify(result, null, 2);
+                resultPre.style.display = 'block';
+                
+                if (result.ok) {
+                    const counts = result.counts;
+                    
+                    // Build detailed result message
+                    let details = [];
+                    if (counts.delete > 0) details.push(`${counts.delete} deletados`);
+                    if (counts.mark_read > 0) details.push(`${counts.mark_read} marcados lidos`);
+                    if (counts.mark_unread > 0) details.push(`${counts.mark_unread} marcados nao-lidos`);
+                    if (counts.send > 0) details.push(`${counts.send} enviados`);
+                    if (counts.skip > 0) details.push(`${counts.skip} pulados`);
+                    if (counts.ignored > 0) details.push(`${counts.ignored} ja processados`);
+                    if (counts.errors > 0) details.push(`${counts.errors} ERROS`);
+                    
+                    const detailStr = details.length > 0 ? details.join(', ') : 'nenhuma acao';
+                    
+                    // Show individual results
+                    let resultSummary = 'RESULTADOS:\n';
+                    for (const r of result.results || []) {
+                        resultSummary += `${r.key}: ${r.decision} -> ${r.status} (${r.detail})\n`;
+                    }
+                    resultPre.textContent = resultSummary;
+                    resultPre.style.display = 'block';
+                    
+                    if (dryRun) {
+                        showStatus(`SIMULACAO: ${detailStr}`);
+                        resultPre.style.background = '#fff3cd';
+                        resultPre.style.border = '2px solid #ffc107';
+                    } else {
+                        showStatus(`EXECUTADO: ${detailStr}`);
+                        resultPre.style.background = '#d4edda';
+                        resultPre.style.border = '2px solid #28a745';
+                        // Update session after 5 seconds
+                        setTimeout(() => {
+                            startSession();
+                        }, 5000);
+                    }
+                } else {
+                    showStatus('Erro no despacho: ' + (result.error || 'desconhecido'), true);
+                    resultPre.style.background = '#f8d7da';
+                    resultPre.style.border = '2px solid #dc3545';
+                }
+            } catch (e) {
+                showStatus('JSON invalido: ' + e.message, true);
+                resultPre.textContent = 'Erro: ' + e.message;
+                resultPre.style.display = 'block';
+            }
+        }
+
+        async function showDispatchExample() {
+            try {
+                const res = await fetch('/dispatch/example');
+                const data = await res.json();
+                
+                document.getElementById('dispatch-json').value = JSON.stringify(data, null, 2);
+                showStatus('Exemplo carregado - ajuste as chaves e acoes');
+            } catch (e) {
+                showStatus('Erro ao carregar exemplo: ' + e.message, true);
+            }
+        }
+
+        async function sendComposedEmail() {
+            const provider = document.getElementById('compose-provider').value;
+            const to = document.getElementById('compose-to').value.trim();
+            const subject = document.getElementById('compose-subject').value.trim();
+            const body = document.getElementById('compose-body').value.trim();
+            
+            if (!to) {
+                showStatus('Informe o destinatario', true);
+                return;
+            }
+            if (!subject) {
+                showStatus('Informe o assunto', true);
+                return;
+            }
+            if (!body) {
+                showStatus('Escreva a mensagem', true);
+                return;
+            }
+            
+            if (!confirm(`Enviar email para ${to} via ${provider.toUpperCase()}?`)) {
+                return;
+            }
+            
+            try {
+                showStatus('Enviando email...');
+                const res = await fetch(`/compose/${provider}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, subject, body })
+                });
+                
+                const result = await res.json();
+                
+                if (result.ok) {
+                    showStatus(`Email enviado para ${to}`);
+                    document.getElementById('compose-to').value = '';
+                    document.getElementById('compose-subject').value = '';
+                    document.getElementById('compose-body').value = '';
+                } else {
+                    showStatus('Erro: ' + (result.detail || 'Falha ao enviar'), true);
+                }
+            } catch (e) {
+                showStatus('Erro ao enviar: ' + e.message, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQueue();
+            loadEmails();
+        });
+    </script>
+</body>
+</html>

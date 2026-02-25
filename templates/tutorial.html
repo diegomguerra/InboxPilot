@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InboxPilot - Tutorial</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.7;
+        }
+        .header {
+            background: #1a73e8;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 1.4rem; }
+        .header a {
+            color: white;
+            text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .header a:hover { background: rgba(255,255,255,0.35); }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+        }
+        .intro {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .intro h2 {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            color: #1a73e8;
+        }
+        .intro p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .toc {
+            background: white;
+            border-radius: 12px;
+            padding: 28px 32px;
+            margin-bottom: 48px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .toc h3 {
+            font-size: 1rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .toc-list a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+        .toc-list a:hover { background: #e8f0fe; }
+        .toc-list .toc-num {
+            background: #1a73e8;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 36px 36px 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            scroll-margin-top: 24px;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .section-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        .section-header h3 {
+            font-size: 1.4rem;
+        }
+        .section-header .badge {
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        .what-box {
+            background: #f0f7ff;
+            border-left: 4px solid #1a73e8;
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        .steps {
+            list-style: none;
+            counter-reset: step;
+        }
+        .steps li {
+            counter-increment: step;
+            padding: 14px 16px 14px 56px;
+            position: relative;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .steps li:last-child { border-bottom: none; }
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 14px;
+            width: 28px;
+            height: 28px;
+            background: #e8f0fe;
+            color: #1a73e8;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .steps li strong { color: #1a73e8; }
+        .tip {
+            background: #fff8e1;
+            border-left: 4px solid #f9a825;
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 16px;
+            font-size: 0.92rem;
+        }
+        .tip::before {
+            content: 'Dica: ';
+            font-weight: 600;
+            color: #f57f17;
+        }
+        .example-box {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-top: 16px;
+            font-family: monospace;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #555;
+        }
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .flow-step {
+            background: #e8f0fe;
+            color: #1a73e8;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .flow-arrow {
+            color: #bbb;
+            font-size: 1.2rem;
+        }
+        .highlight {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+        .hl-blue { background: #e8f0fe; color: #1a73e8; }
+        .hl-orange { background: #fff3e0; color: #e65100; }
+        .hl-green { background: #e8f5e9; color: #2e7d32; }
+        .hl-purple { background: #f3e5f5; color: #7b1fa2; }
+        .hl-red { background: #ffebee; color: #c62828; }
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 0.85rem;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 20px 12px 60px; }
+            .section { padding: 24px 20px; }
+            .toc-list { grid-template-columns: 1fr; }
+            .flow-diagram { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>InboxPilot - Tutorial</h1>
+        <a href="/ui">Voltar ao Dashboard</a>
+    </div>
+
+    <div class="container">
+        <div class="intro">
+            <h2>Como usar o InboxPilot</h2>
+            <p>Guia completo de todas as funções do painel. Aprenda a gerenciar seus emails de forma inteligente com ajuda da IA.</p>
+        </div>
+
+        <div class="toc">
+            <h3>Índice</h3>
+            <ul class="toc-list">
+                <li><a href="#atualizar"><span class="toc-num">1</span> Atualizar</a></li>
+                <li><a href="#sincronizar"><span class="toc-num">2</span> Sincronizar</a></li>
+                <li><a href="#triage"><span class="toc-num">3</span> Triage IA</a></li>
+                <li><a href="#handsfree"><span class="toc-num">4</span> Hands Free</a></li>
+                <li><a href="#assistente"><span class="toc-num">5</span> Assistente</a></li>
+                <li><a href="#fila"><span class="toc-num">6</span> Fila</a></li>
+                <li><a href="#importar"><span class="toc-num">7</span> Importar</a></li>
+                <li><a href="#exportar"><span class="toc-num">8</span> Exportar</a></li>
+            </ul>
+        </div>
+
+        <!-- 1. ATUALIZAR -->
+        <div class="section" id="atualizar">
+            <div class="section-header">
+                <div class="section-icon" style="background:#e8f0fe; color:#1a73e8;">1</div>
+                <div>
+                    <h3>Atualizar</h3>
+                    <span class="badge hl-blue">Botão na barra superior</span>
+                </div>
+            </div>
+            <div class="what-box">
+                O botão <strong>Atualizar</strong> busca seus emails nas contas conectadas (Apple Mail e Gmail) e atualiza a lista na tela.
+            </div>
+            <h4 style="margin-bottom:12px;">Como funciona:</h4>
+            <ol class="steps">
+                <li>Escolha o <strong>período</strong> no menu ao lado (Hoje, Esta Semana, Últimos N Dias, ou Personalizado)</li>
+                <li>Marque quais <strong>provedores</strong> quer ver: Apple, Gmail, ou ambos</li>
+                <li>Marque <strong>"Só não lidos"</strong> se quiser filtrar apenas emails que você ainda não leu</li>
+                <li>Escolha entre <strong>Inbox</strong> (caixa de entrada) ou <strong>Spam</strong></li>
+                <li>Clique em <strong>Atualizar</strong> para buscar os emails com esses filtros</li>
+            </ol>
+            <div class="flow-diagram">
+                <div class="flow-step">Configura filtros</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Clica Atualizar</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Lista atualizada</div>
+            </div>
+            <div class="tip">Ao clicar em qualquer email na lista da esquerda, o conteúdo completo aparece no painel central.</div>
+        </div>
+
+        <!-- 2. SINCRONIZAR -->
+        <div class="section" id="sincronizar">
+            <div class="section-header">
+                <div class="section-icon" style="background:#e8f5e9; color:#2e7d32;">2</div>
+                <div>
+                    <h3>Sincronizar</h3>
+                    <span class="badge hl-green">Botão na barra superior</span>
+                </div>
+            </div>
+            <div class="what-box">
+                O botão <strong>Sincronizar</strong> serve para enviar ao servidor todas as ações que ficaram pendentes quando você estava sem internet ou quando a conexão falhou.
+            </div>
+            <h4 style="margin-bottom:12px;">Como funciona:</h4>
+            <ol class="steps">
+                <li>Quando você está <strong>sem internet</strong> (ou o servidor está fora do ar), qualquer ação que você fizer (deletar, enviar resposta, marcar como lido) fica salva <strong>localmente no seu navegador</strong></li>
+                <li>O botão mostra um <strong>número</strong> (badge) indicando quantas ações estão pendentes de envio</li>
+                <li>Quando a conexão voltar, clique em <strong>Sincronizar</strong> para enviar tudo de uma vez ao servidor</li>
+                <li>O sistema processa primeiro as <strong>tarefas de IA</strong> pendentes (como triage e sugestões de resposta) e depois as <strong>ações de email</strong> (enviar, deletar, marcar lido)</li>
+                <li>Após a sincronização, a lista de emails é atualizada automaticamente</li>
+            </ol>
+            <div class="flow-diagram">
+                <div class="flow-step">Ações offline</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Conexão volta</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Clica Sincronizar</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Tudo enviado</div>
+            </div>
+            <div class="tip">Se você está sempre conectado à internet, provavelmente não precisará usar este botão. As ações são executadas imediatamente nesse caso. O badge só aparece quando há ações pendentes.</div>
+        </div>
+
+        <!-- 3. TRIAGE IA -->
+        <div class="section" id="triage">
+            <div class="section-header">
+                <div class="section-icon" style="background:#fff3e0; color:#e65100;">3</div>
+                <div>
+                    <h3>Triage IA</h3>
+                    <span class="badge hl-orange">Análise automática com IA</span>
+                </div>
+            </div>
+            <div class="what-box">
+                O botão <strong>Triage IA</strong> envia seus emails visíveis para a inteligência artificial, que classifica cada um por prioridade e sugere o que fazer.
+            </div>
+            <h4 style="margin-bottom:12px;">Como funciona:</h4>
+            <ol class="steps">
+                <li>Primeiro, <strong>atualize</strong> seus emails para ter a lista atualizada</li>
+                <li>Clique no botão laranja <strong>Triage IA</strong> na barra superior</li>
+                <li>A IA analisa até <strong>10 emails</strong> de uma vez e abre um painel com os resultados</li>
+                <li>Para cada email, você verá:
+                    <br><span class="highlight hl-red">Alta</span> <span class="highlight hl-orange">Média</span> <span class="highlight hl-green">Baixa</span> = prioridade
+                    <br>+ um <strong>resumo</strong> do conteúdo
+                    <br>+ uma <strong>ação sugerida</strong> (responder, arquivar, deletar, etc.)
+                </li>
+                <li>Você pode clicar em <strong>"Adicionar à Fila"</strong> em cada email para enfileirar a ação sugerida</li>
+                <li>Ou clicar em <strong>"Sugerir Resposta"</strong> para a IA criar um rascunho de resposta</li>
+                <li>Use <strong>"Adicionar Todos à Fila"</strong> para enfileirar todas as ações de uma vez</li>
+            </ol>
+            <div class="flow-diagram">
+                <div class="flow-step">Clica Triage IA</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">IA analisa emails</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Vê prioridades</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Adiciona à Fila</div>
+            </div>
+            <div class="tip">Emails de código OTP, no-reply e newsletters são classificados automaticamente sem usar a IA, economizando créditos.</div>
+        </div>
+
+        <!-- 4. HANDS FREE -->
+        <div class="section" id="handsfree">
+            <div class="section-header">
+                <div class="section-icon" style="background:#f3e5f5; color:#7b1fa2;">4</div>
+                <div>
+                    <h3>Hands Free</h3>
+                    <span class="badge hl-purple">Controle por voz</span>
+                </div>
+            </div>
+            <div class="what-box">
+                O modo <strong>Hands Free</strong> permite controlar o InboxPilot inteiramente pela voz. Você fala, a IA processa e responde em voz alta.
+            </div>
+            <h4 style="margin-bottom:12px;">Como funciona:</h4>
+            <ol class="steps">
+                <li>Clique no botão roxo <strong>Hands Free</strong> na barra superior</li>
+                <li>Permita o acesso ao <strong>microfone</strong> quando o navegador pedir</li>
+                <li>Escolha o <strong>modo</strong>:
+                    <br><span class="highlight hl-purple">Automático</span> = escuta continuamente (fala &#8594; processa &#8594; responde &#8594; escuta de novo)
+                    <br><span class="highlight hl-blue">Manual</span> = pressione o botão do microfone cada vez que quiser falar
+                </li>
+                <li>Fale normalmente em <strong>português</strong>. Exemplos:
+                    <br>"Resuma meus emails de hoje"
+                    <br>"Responda o email do João dizendo que confirmo a reunião"
+                    <br>"Delete os emails de spam"
+                    <br>"Quais emails são urgentes?"
+                </li>
+                <li>A IA processa seu comando e <strong>fala a resposta</strong> em voz alta</li>
+            </ol>
+            <h4 style="margin: 20px 0 12px;">Opções extras:</h4>
+            <ol class="steps">
+                <li><strong>Aprovar ações automaticamente</strong> - quando a IA sugerir uma ação (enviar resposta, deletar), ela vai direto para a Fila sem pedir confirmação</li>
+                <li><strong>Triage automático ao iniciar</strong> - ao abrir o Hands Free, a IA faz um triage dos seus emails automaticamente e fala o resumo</li>
+                <li><strong>Seletor de voz</strong> - escolha qual voz o sistema usa para falar (vozes em português aparecem primeiro)</li>
+            </ol>
+            <div class="flow-diagram">
+                <div class="flow-step">Abre Hands Free</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Você fala</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">IA processa</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Responde em voz</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Escuta de novo</div>
+            </div>
+            <div class="tip">Funciona melhor no Chrome ou Edge. Para fechar, clique no X ou diga "fechar".</div>
+        </div>
+
+        <!-- 5. ASSISTENTE -->
+        <div class="section" id="assistente">
+            <div class="section-header">
+                <div class="section-icon" style="background:#e8f5e9; color:#2e7d32;">5</div>
+                <div>
+                    <h3>Assistente</h3>
+                    <span class="badge hl-green">Chat com IA (aba do painel direito)</span>
+                </div>
+            </div>
+            <div class="what-box">
+                A aba <strong>Assistente</strong> é um chat de texto com a IA. Você digita perguntas ou comandos sobre seus emails e a IA responde com informações ou propõe ações.
+            </div>
+            <h4 style="margin-bottom:12px;">Como funciona:</h4>
+            <ol class="steps">
+                <li>No painel direito, clique na aba <strong>"Assistente"</strong> (geralmente já está ativa)</li>
+                <li>Digite sua pergunta ou comando na caixa de texto na parte inferior</li>
+                <li>Clique em <strong>Enviar</strong> ou pressione Enter</li>
+                <li>A IA responde levando em conta os emails que estão carregados na tela</li>
+                <li>Se a IA sugerir uma ação (como enviar resposta ou deletar), aparece um botão para <strong>adicionar à Fila</strong></li>
+            </ol>
+            <h4 style="margin: 20px 0 12px;">Exemplos do que perguntar:</h4>
+            <div class="example-box">"Resuma os emails de hoje"
+"Tem algo urgente nos meus emails?"
+"Escreva uma resposta para o email do Carlos"
+"Quais emails posso deletar com segurança?"
+"Responda ao email sobre a reunião confirmando presença"</div>
+            <div class="flow-diagram">
+                <div class="flow-step">Digita pergunta</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">IA analisa emails</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Responde no chat</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Propõe ações (se houver)</div>
+            </div>
+            <div class="tip">A conversa tem memória: a IA lembra do que você já perguntou na mesma sessão, então você pode ir refinando pedidos.</div>
+        </div>
+
+        <!-- 6. FILA -->
+        <div class="section" id="fila">
+            <div class="section-header">
+                <div class="section-icon" style="background:#fff3e0; color:#e65100;">6</div>
+                <div>
+                    <h3>Fila</h3>
+                    <span class="badge hl-orange">Ações pendentes (aba do painel direito)</span>
+                </div>
+            </div>
+            <div class="what-box">
+                A aba <strong>Fila</strong> mostra todas as ações que foram propostas pela IA ou por você, aguardando execução. É como uma lista de tarefas para seus emails.
+            </div>
+            <h4 style="margin-bottom:12px;">Como funciona:</h4>
+            <ol class="steps">
+                <li>Ações são adicionadas à Fila a partir do <strong>Triage IA</strong>, do <strong>Assistente</strong>, ou do <strong>Hands Free</strong></li>
+                <li>Clique na aba <strong>"Fila"</strong> no painel direito para ver as ações pendentes</li>
+                <li>Cada ação mostra: tipo (enviar, deletar, marcar lido), destinatário e um resumo</li>
+                <li>Você pode <strong>remover</strong> ações individuais que não quer executar</li>
+                <li>Clique em <strong>"Validar (dry run)"</strong> para a IA verificar se tudo está correto antes de executar</li>
+                <li>Clique em <strong>"Executar Tudo"</strong> para realizar todas as ações de uma vez</li>
+            </ol>
+            <div class="flow-diagram">
+                <div class="flow-step">Ações na fila</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Revisa / Remove</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Valida (dry run)</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Executa Tudo</div>
+            </div>
+            <div class="tip">Deletar emails tem segurança em duas etapas: a primeira vez marca como "pendente de confirmação", só na segunda vez realmente deleta. Isso evita acidentes.</div>
+        </div>
+
+        <!-- 7. IMPORTAR -->
+        <div class="section" id="importar">
+            <div class="section-header">
+                <div class="section-icon" style="background:#e3f2fd; color:#1565c0;">7</div>
+                <div>
+                    <h3>Importar</h3>
+                    <span class="badge hl-blue">Executar plano do ChatGPT (aba do painel direito)</span>
+                </div>
+            </div>
+            <div class="what-box">
+                A aba <strong>Importar</strong> permite colar um JSON de ações gerado pelo ChatGPT (ou outro LLM externo) e executar essas ações no InboxPilot.
+            </div>
+            <h4 style="margin-bottom:12px;">Como funciona:</h4>
+            <ol class="steps">
+                <li>Clique na aba <strong>"Importar"</strong> no painel direito</li>
+                <li>Cole o <strong>JSON</strong> com as ações na área de texto. O formato esperado é uma lista de ações com tipo, provedor, email e conteúdo</li>
+                <li>Clique em <strong>"Simular (dry run)"</strong> para ver o que aconteceria sem executar nada</li>
+                <li>Se estiver tudo certo, clique em <strong>"Executar"</strong> para realizar as ações de verdade</li>
+            </ol>
+            <h4 style="margin: 20px 0 12px;">Exemplo de JSON:</h4>
+            <div class="example-box">{
+  "actions": [
+    {
+      "action": "send",
+      "provider": "apple",
+      "to": "joao@email.com",
+      "subject": "Re: Reunião",
+      "body": "Olá João, confirmo presença."
+    },
+    {
+      "action": "delete",
+      "provider": "gmail",
+      "message_id": "abc123"
+    }
+  ]
+}</div>
+            <div class="tip">Use o modo "Simular" primeiro para garantir que não há erros antes de executar ações reais.</div>
+        </div>
+
+        <!-- 8. EXPORTAR -->
+        <div class="section" id="exportar">
+            <div class="section-header">
+                <div class="section-icon" style="background:#fce4ec; color:#c62828;">8</div>
+                <div>
+                    <h3>Exportar</h3>
+                    <span class="badge hl-red">Copiar dados para uso externo (aba do painel direito)</span>
+                </div>
+            </div>
+            <div class="what-box">
+                A aba <strong>Exportar</strong> permite copiar seus emails em formatos úteis para colar no ChatGPT ou em outras ferramentas externas.
+            </div>
+            <h4 style="margin-bottom:12px;">Dois botões disponíveis:</h4>
+            <ol class="steps">
+                <li><strong>"Copiar RESUMO para ChatGPT"</strong> - Gera um texto resumido de todos os emails visíveis, formatado para colar diretamente no ChatGPT. Inclui remetente, assunto, data e um trecho do conteúdo de cada email.</li>
+                <li><strong>"Copiar DESPACHO FINAL JSON"</strong> - Gera um JSON estruturado que você pode editar no ChatGPT e depois importar de volta no InboxPilot (na aba Importar) para executar as ações.</li>
+            </ol>
+            <div class="flow-diagram">
+                <div class="flow-step">Exporta resumo</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Cola no ChatGPT</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">ChatGPT gera ações</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Importa de volta</div>
+            </div>
+            <div class="tip">Este fluxo Exportar &#8594; ChatGPT &#8594; Importar é ideal para quem quer usar o ChatGPT Plus ou outro modelo mais avançado para analisar emails complexos.</div>
+        </div>
+
+        <!-- FLUXO GERAL -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background:#e8eaf6; color:#283593;">&#9733;</div>
+                <div>
+                    <h3>Fluxo geral recomendado</h3>
+                </div>
+            </div>
+            <ol class="steps">
+                <li><strong>Atualizar</strong> - Carregue seus emails do período desejado</li>
+                <li><strong>Triage IA</strong> - Deixe a IA classificar por prioridade e sugerir ações</li>
+                <li><strong>Assistente / Hands Free</strong> - Converse com a IA para refinar respostas ou pedir ações específicas</li>
+                <li><strong>Fila</strong> - Revise as ações propostas</li>
+                <li><strong>Executar</strong> - Confirme e execute tudo de uma vez</li>
+            </ol>
+            <div class="flow-diagram">
+                <div class="flow-step">Atualizar</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Triage IA</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Refinar (Chat/Voz)</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Revisar Fila</div>
+                <span class="flow-arrow">&#8594;</span>
+                <div class="flow-step">Executar</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        InboxPilot v2.0 &mdash; Tutorial
+    </div>
+</body>
+</html>

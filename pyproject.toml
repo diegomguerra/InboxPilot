@@ -1,0 +1,22 @@
+[project]
+name = "python-template"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+requires-python = ">=3.11"
+dependencies = [
+ "fastapi>=0.115.0",
+ "uvicorn>=0.30.6",
+ "requests>=2.32.3",
+ "python-dotenv>=1.0.1",
+ "msal>=1.30.0",
+ "google-api-python-client>=2.188.0",
+ "pytest>=9.0.2",
+ "httpx>=0.28.1",
+ "google-auth>=2.47.0",
+ "google-auth-oauthlib>=1.2.4",
+ "reportlab>=4.4.9",
+ "pydantic>=2.12.5",
+ "psycopg2-binary>=2.9.11",
+ "python-multipart>=0.0.22",
+]
