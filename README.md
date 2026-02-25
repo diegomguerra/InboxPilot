@@ -126,3 +126,5 @@ When `INBOXPILOT_API_KEY` is set:
 - Mutating endpoints require `X-API-Key` header
 - Dashboard remains accessible for viewing
 - Actions (send, delete, etc.) are protected
+
+Integração Outlook local via pywin32 - testando sync GitHub/Replit
